@@ -1,5 +1,11 @@
 package network.neural.engine;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.StringTokenizer;
+
 public class NeuralNetwork3 {
 
 	private Matrix w1;
@@ -68,5 +74,46 @@ public class NeuralNetwork3 {
 			}
 		}
 		return new Matrix(ret);
+	}
+	
+	public Matrix[] getMatricesFromCSV(File csv, int inputSize, int outputSize) {
+		ArrayList<ArrayList<Double>> rows = new ArrayList<>();
+		
+		try {
+			Scanner r = new Scanner(csv);
+			while (r.hasNextLine()) {
+				ArrayList<Double> column = new ArrayList<>();
+				String line = r.nextLine();
+				StringTokenizer st = new StringTokenizer(line, ",", false);
+				while (st.hasMoreTokens()) {
+					column.add(Double.parseDouble(st.nextToken().trim()));
+				}
+				rows.add(column);
+			}
+			r.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		double[][] inputData = new double[rows.size()][inputSize];
+		for (int i = 0; i < inputData.length; i ++) {
+			for (int j = 0; j < inputSize; j ++) {
+				inputData[i][j] = rows.get(i).get(j);
+			}
+		}
+		Matrix X = new Matrix(inputData);
+		
+		double[][] outputData = new double[rows.size()][outputSize];
+		for (int i = 0; i < outputData.length; i ++) {
+			for (int j = inputSize; j < outputSize + inputSize; j ++) {
+				outputData[i][j - inputSize] = rows.get(i).get(j);
+			}
+		}
+		Matrix Y = new Matrix(outputData);
+		
+		Matrix[] ret = {
+				X, Y
+		};
+		return ret;
 	}
 }

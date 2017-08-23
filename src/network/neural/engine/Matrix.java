@@ -111,11 +111,13 @@ public class Matrix {
 	public String toString() {
 		String ret = "";
 		for (int i = 0; i < rows; i ++) {
+			ret += "[";
 			for (int j = 0; j < columns; j ++) {
-				ret += a[i][j] + ", ";
+				ret += Math.round(a[i][j] * 100) / 100.0 + (j < columns - 1 ? ", " : "");
 			}
-			ret += "\n";
+			ret += "]\n";
 		}
+		
 		return ret;
 	}
 }
