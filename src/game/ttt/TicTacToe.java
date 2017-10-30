@@ -1,6 +1,8 @@
 package game.ttt;
 
-import java.util.Scanner;
+import main.Main;
+import network.neural.engine.Matrix;
+import network.neural.engine.NeuralNetwork3;
 
 
 public class TicTacToe {
@@ -9,14 +11,13 @@ public class TicTacToe {
 		HUMAN,
 		COMPUTER
 	}
-	
 
-	private Scanner r;
-	
+	private Player[] players;
 	private int[] board;
 	private int turn;
 	private int state;
-	private Player[] players;
+	
+	private NeuralNetwork3[] nn;
 	
 	public static TicTacToe StartingBoard(Player p1, Player p2) {
 		int[] board = new int[9];
@@ -28,11 +29,15 @@ public class TicTacToe {
 	
 	public TicTacToe(int[] board, Player p1, Player p2) {
 		this.board = board;
-		players = new Player[2];
-		players[0] = p1;
-		players[1] = p2;
+		this.players = new Player[2];
+		this.players[0] = p1;
+		this.players[1] = p2;
 		
-		r = new Scanner(System.in);
+		this.nn = new NeuralNetwork3[2];
+	}
+	
+	public void loadNeuralNetwork(int index, NeuralNetwork3 nn) {
+		this.nn[index] = nn;
 	}
 	
 	public void start() {
@@ -40,7 +45,7 @@ public class TicTacToe {
 	}
 	
 	private void gameLoop() {
-		turn = 1;
+		turn = 0;
 		state = -1;
 		while (state == -1) {
 			switch (players[turn]) {
@@ -53,10 +58,8 @@ public class TicTacToe {
 			}
 			
 			state = evaluateBoard();
-			
 			turn = turn == 0 ? 1 : 0;
 		}
-		
 		end();
 	}
 	
@@ -64,25 +67,60 @@ public class TicTacToe {
 		System.out.println(this + "\n");
 		int input;
 		do {
-			input = r.nextInt();
+			input = Main.r.nextInt();
 		} while(board[input] != -1);
 		board[input] = turn;
 	}
 	
 	private void computerTurn() {
+		double[] data = new double[18];
+		for (int i = 0; i < board.length; i ++) {
+			if (board[i] == -1) {
+				data[i] = 0;
+				data[i + 1] = 0;
+			} else if (board[i] == 0) {
+				data[i] = 0;
+				data[i + 1] = 1;
+			} else if (board[i] == 1) {
+				data[i] = 1;
+				data[i + 1] = 0;
+			}
+		}
+		Matrix X = Matrix.FromArray(data);
+		Matrix out = nn[turn].forward(X);
 		
+		int largestIndex;
+		double largest;
+		do {
+			largestIndex = 0;
+			largest = 0;
+			for (int i = 0; i < out.getColumns(); i ++) {
+				if (out.get(0, i) > largest) {
+					largestIndex = i;
+					largest = out.get(0, i);
+				}
+			}
+			out.set(0, largestIndex, 0);
+		} while (board[largestIndex] != -1);
+		board[largestIndex] = turn;
 	}
 	
 	private void end() {
-		System.out.println(this);
-		System.out.println( (state == 0 ? "O" : "X") + " is the winner!");
-		r.close();
+		//System.out.println(this);
+		//if (state == 2) {
+		//	System.out.println("It's a draw!");
+		//} else {
+		//	System.out.println( (state == 0 ? "X" : "O") + " is the winner!");
+		//}
 	}
 	
+	public int getWinner() {
+		return state;
+	}
 	
 	/**
 	 * 
-	 * @return 1 for X victory, 0 for O Victory, -1 for no Victory, 2 for Draw
+	 * @return 0 for X victory, 1 for O Victory, -1 for no Victory, 2 for Draw
 	 */
 	private int evaluateBoard() {
 		/*		X|X|X
@@ -180,10 +218,10 @@ public class TicTacToe {
 				b[i] = " ";
 				break;
 			case 0:
-				b[i] = "O";
+				b[i] = "X";
 				break;
 			case 1:
-				b[i] = "X";
+				b[i] = "O";
 				break;
 			}
 		}
