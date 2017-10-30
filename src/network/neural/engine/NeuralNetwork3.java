@@ -8,10 +8,16 @@ import java.util.StringTokenizer;
 
 public class NeuralNetwork3 {
 
+	private int inputSize;
+	private int outputSize;
+	
 	private Matrix w1;
 	private Matrix w2;
 	
 	public NeuralNetwork3(int inputSize, int hiddenSize, int outputSize) {
+		this.inputSize = inputSize;
+		this.outputSize = outputSize;
+		
 		w1 = new Matrix(new double[inputSize][hiddenSize]);
 		w2 = new Matrix(new double[hiddenSize][outputSize]);
 		
@@ -26,6 +32,14 @@ public class NeuralNetwork3 {
 				w2.set(i, j, Math.random());
 			}
 		}
+	}
+	
+	public NeuralNetwork3(Matrix w1, Matrix w2) {
+		this.inputSize = w1.getRows();
+		this.outputSize = w2.getColumns();
+		
+		this.w1 = w1;
+		this.w2 = w2;
 	}
 	
 	public Matrix forward(Matrix X) {
@@ -46,6 +60,21 @@ public class NeuralNetwork3 {
 		
 		w1 = w1.sub(dJdW1);
 		w2 = w2.sub(dJdW2);
+	}
+	
+	public double cost(Matrix X, Matrix Y) {
+		Matrix Z2 = X.dot(w1);
+		Matrix A2 = sigmoid(Z2);
+		Matrix Z3 = A2.dot(w2);
+		Matrix yHat = sigmoid(Z3);
+		
+		double sum = 0;
+		for (int i = 0; i < Y.getRows(); i ++) {
+			for (int j = 0; j < Y.getColumns(); j ++) {
+				sum += 0.5 * Math.pow(Y.get(i, j) - yHat.get(i, j), 2);
+			}
+		}
+		return sum;
 	}
 	
 	public double sigmoid(double k) {
@@ -76,7 +105,7 @@ public class NeuralNetwork3 {
 		return new Matrix(ret);
 	}
 	
-	public Matrix[] getMatricesFromCSV(File csv, int inputSize, int outputSize) {
+	public Matrix[] getMatricesFromCSV(File csv) {
 		ArrayList<ArrayList<Double>> rows = new ArrayList<>();
 		
 		try {
@@ -115,5 +144,21 @@ public class NeuralNetwork3 {
 				X, Y
 		};
 		return ret;
+	}
+	
+	public Matrix getW1() {
+		return w1;
+	}
+	
+	public Matrix getW2() {
+		return w2;
+	}
+
+	public void setW1(Matrix w1) {
+		this.w1 = w1;
+	}
+	
+	public void setW2(Matrix w2) {
+		this.w2 = w2;
 	}
 }
