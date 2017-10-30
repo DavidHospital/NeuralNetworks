@@ -13,6 +13,13 @@ public class Matrix {
 		this.columns = a[0].length;
 	}
 	
+	public Matrix(int rows, int columns) {
+		this.rows = rows;
+		this.columns = columns;
+		
+		this.a = new double[rows][columns];
+	}
+	
 	public static Matrix Identity(int rows, int columns) {
 		double[][] a = new double[rows][columns];
 		for (int r = 0; r < rows; r ++) {
@@ -25,6 +32,14 @@ public class Matrix {
 			}
 		}
 		return new Matrix(a);
+	}
+	
+	public static Matrix FromArray(double[] data) {
+		double[][] array = {
+				data
+		};
+		Matrix ret = new Matrix(array);
+		return ret;
 	}
 	
 	public Matrix transpose() {
@@ -119,5 +134,16 @@ public class Matrix {
 		}
 		
 		return ret;
+	}
+	
+	@Override
+	public Matrix clone() {
+		Matrix m = new Matrix(rows, columns);
+		for (int i = 0; i < rows; i ++) {
+			for (int j = 0; j < columns; j ++) {
+				m.set(i, j, this.get(i, j));
+			}
+		}
+		return m;
 	}
 }
