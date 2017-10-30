@@ -1,5 +1,7 @@
 package main;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -11,59 +13,65 @@ import network.neural.engine.NeuralNetwork3;
 public class Main {
 	
 	public static Scanner r;
+	public static PrintWriter pw;
 	
 	public static void main (String[] args) {
 		
 		r = new Scanner(System.in);
-		
-		Population pop = new Population(20, 0.01f, 0.5f);
-		pop.generateInital(18, 9, 9);
-		
-		int i = 0;
-		int games = 0;
-		int losses = 0;
-		while(i < 5000) {
-			games = 0;
-			losses = 0;
-			pop.population = pop.newPopulation();
-			pop.score = new int[pop.popSize];
+		try {
+			pw = new PrintWriter("gen_data.txt");
 			
-			for (int j = 0; j < pop.popSize - 1; j ++) {
-				NeuralNetwork3 nn1 = DNA.CreateFromDNA(pop.population[j]);
-				for (int k = j + 1; k < pop.popSize; k ++) {
-					NeuralNetwork3 nn2 = DNA.CreateFromDNA(pop.population[k]);
-					TicTacToe ttt = TicTacToe.StartingBoard(Player.COMPUTER, Player.COMPUTER);
-					ttt.loadNeuralNetwork(0, nn1);
-					ttt.loadNeuralNetwork(1, nn2);
-					ttt.start();
-					int winner = ttt.getWinner();
-					if (winner == 0) {
-						pop.score[k] -= 1;
-						losses ++;
-					} else if (winner == 1) {
-						pop.score[j] -= 1;
-						losses ++;
-					} else {
-						
+			Population pop = new Population(20, 0.02f, 0.5f);
+			pop.generateInital(19, 15, 9);
+			
+			int i = 0;
+			while(i < 100000) {
+				pop.population = pop.newPopulation();
+				pop.score = new int[pop.popSize];
+				
+				for (int j = 0; j < pop.popSize; j ++) {
+					NeuralNetwork3 nn1 = DNA.CreateFromDNA(pop.population[j]);
+					for (int k = 0; k < pop.popSize; k ++) {
+						NeuralNetwork3 nn2 = DNA.CreateFromDNA(pop.population[k]);
+						TicTacToe ttt = TicTacToe.StartingBoard(Player.COMPUTER, Player.COMPUTER);
+						ttt.loadNeuralNetwork(0, nn1);
+						ttt.loadNeuralNetwork(1, nn2);
+						ttt.start();
+						int winner = ttt.getWinner();
+						if (winner == 0) {
+							pop.score[j] += 1;
+						} else if (winner == 1) {
+							pop.score[k] += 1;
+						} else {
+						}
 					}
-					games ++;
 				}
+				if (i % 100 == 0) {
+					pop.sortPopulation();
+					System.out.printf("Generation: %d\n", i);
+					System.out.printf("\tBest: %d\n", pop.score[0]);
+					System.out.printf("\tMedian: %d\n", pop.score[pop.popSize / 2]);
+					System.out.printf("\tWorst: %d\n", pop.score[pop.popSize - 1]);
+					pw.printf("%d,%d,%d,%d\n", i, pop.score[0], pop.score[pop.popSize / 2], pop.score[pop.popSize - 1]);
+					pw.flush();
+				}
+				i++;
 			}
-			float lossPercent = (float) losses / games;
-			System.out.printf("Generation: %d\tLoss Percent: %.2f\tMutation Rate: %.3f\n", i, lossPercent, pop.mutationRate);
-			if (pop.mutationRate > 0.001) {
-				pop.mutationRate *= 0.999f;
+			
+			pw.close();
+			
+			while(true) {
+				pop.sortPopulation();
+				NeuralNetwork3 nn = DNA.CreateFromDNA(pop.population[0]);
+				TicTacToe ttt = TicTacToe.StartingBoard(Player.COMPUTER, Player.HUMAN);
+				ttt.loadNeuralNetwork(0, nn);
+				ttt.start();
 			}
-			i++;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 		
-		while(true) {
-			pop.sortPopulation();
-			NeuralNetwork3 nn = DNA.CreateFromDNA(pop.population[0]);
-			TicTacToe ttt = TicTacToe.StartingBoard(Player.HUMAN, Player.COMPUTER);
-			ttt.loadNeuralNetwork(1, nn);
-			ttt.start();
-		}
+		
 	}
 }
 
@@ -100,8 +108,9 @@ class Population {
 		DNA[] newPop = new DNA[popSize];
 		
 		for (int i = 0; i < popSize; i ++) {
-			DNA parent = getParent(parentPercentile);
-			DNA child = parent.clone();
+			DNA parent1 = getParent(parentPercentile);
+			DNA parent2 = getParent(parentPercentile);
+			DNA child = parent1.splice(parent2);
 			child.mutate(mutationRate);
 			newPop[i] = child;
 		}
@@ -149,17 +158,18 @@ class DNA {
 	}
 	
 	public static DNA createRandom(int inputSize, int hiddenSize, int outputSize) {
+		Random r = new Random();
 		DNA dna = new DNA(inputSize, hiddenSize, outputSize);
 		
 		for (int k = 0; k < inputSize; k ++) {
 			for (int j = 0; j < hiddenSize; j ++) {
-				dna.w1.set(k, j, Math.random());
+				dna.w1.set(k, j, r.nextGaussian());
 			}
 		}
 		
 		for (int k = 0; k < hiddenSize; k ++) {
 			for (int j = 0; j < outputSize; j ++) {
-				dna.w2.set(k, j, Math.random());
+				dna.w2.set(k, j, r.nextGaussian());
 			}
 		}
 		
@@ -191,35 +201,26 @@ class DNA {
 		for (int i = 0; i < w2.getRows(); i ++) {
 			for (int j = 0; j < w2.getColumns(); j ++) {
 				if (r.nextFloat() < mutationRate) {
-					w2.set(i, j, r.nextGaussian());
+					w2.set(i, j, w2.get(i, j) + r.nextGaussian());
 				}
 			}
 		}
 	}
 	
 	public DNA splice(DNA other) {
-		Random r = new Random();
 		DNA ret = new DNA();
 		ret.w1 = new Matrix(w1.getRows(), w1.getColumns());
 		ret.w2 = new Matrix(w2.getRows(), w2.getColumns());
 		
 		for (int i = 0; i < w1.getRows(); i ++) {
 			for (int j = 0; j < w1.getColumns(); j ++) {
-				if (r.nextFloat() < 0.5) {
-					ret.w1.set(i, j, this.w1.get(i, j));
-				} else {
-					ret.w1.set(i, j, other.w1.get(i, j));
-				}
+				ret.w1.set(i, j, this.w1.get(i, j));
 			}
 		}
 		
 		for (int i = 0; i < w2.getRows(); i ++) {
 			for (int j = 0; j < w2.getColumns(); j ++) {
-				if (r.nextFloat() < 0.5) {
-					ret.w2.set(i, j, this.w2.get(i, j));
-				} else {
-					ret.w2.set(i, j, other.w2.get(i, j));
-				}
+				ret.w2.set(i, j, other.w2.get(i, j));
 			}
 		}
 		return ret;

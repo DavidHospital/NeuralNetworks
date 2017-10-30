@@ -73,7 +73,7 @@ public class TicTacToe {
 	}
 	
 	private void computerTurn() {
-		double[] data = new double[18];
+		double[] data = new double[19];
 		for (int i = 0; i < board.length; i ++) {
 			if (board[i] == -1) {
 				data[i] = 0;
@@ -86,6 +86,7 @@ public class TicTacToe {
 				data[i + 1] = 0;
 			}
 		}
+		data[18] = turn;
 		Matrix X = Matrix.FromArray(data);
 		Matrix out = nn[turn].forward(X);
 		
