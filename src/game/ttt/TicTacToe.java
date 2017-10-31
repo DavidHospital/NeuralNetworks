@@ -1,6 +1,6 @@
 package game.ttt;
 
-import main.Main;
+import main.Game;
 import network.neural.engine.Matrix;
 import network.neural.engine.NeuralNetwork3;
 
