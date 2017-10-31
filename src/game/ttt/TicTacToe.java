@@ -1,8 +1,11 @@
 package game.ttt;
 
-import main.Game;
-import network.neural.engine.Matrix;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.util.Scanner;
+
 import network.neural.engine.NeuralNetwork3;
+import tools.Matrix;
 
 
 public class TicTacToe {
@@ -65,10 +68,17 @@ public class TicTacToe {
 	
 	private void humanTurn() {
 		System.out.println(this + "\n");
+		Scanner scan = new Scanner(new FilterInputStream(System.in) {
+		    @Override
+		    public void close() throws IOException {
+		        // do nothing here ! 
+		    }
+		});
 		int input;
 		do {
-			input = Main.r.nextInt();
+			input = scan.nextInt();
 		} while(board[input] != -1);
+		scan.close();
 		board[input] = turn;
 	}
 	
@@ -76,14 +86,14 @@ public class TicTacToe {
 		double[] data = new double[19];
 		for (int i = 0; i < board.length; i ++) {
 			if (board[i] == -1) {
-				data[i] = 0;
-				data[i + 1] = 0;
+				data[2 * i] = 0;
+				data[2 * i + 1] = 0;
 			} else if (board[i] == 0) {
-				data[i] = 0;
-				data[i + 1] = 1;
+				data[2 * i] = 0;
+				data[2 * i + 1] = 1;
 			} else if (board[i] == 1) {
-				data[i] = 1;
-				data[i + 1] = 0;
+				data[2 * i] = 1;
+				data[2 * i + 1] = 0;
 			}
 		}
 		data[18] = turn;
