@@ -2,12 +2,12 @@ package genetic;
 
 import java.util.Random;
 
-import network.neural.engine.Matrix;
 import network.neural.engine.NeuralNetwork3;
+import tools.Matrix;
 
 public class DNA {
-	Matrix w1;
-	Matrix w2;
+	public Matrix w1;
+	public Matrix w2;
 	
 	DNA(){
 	}
@@ -15,6 +15,13 @@ public class DNA {
 	DNA(int inputSize, int hiddenSize, int outputSize) {
 		w1 = new Matrix(inputSize, hiddenSize);
 		w2 = new Matrix(hiddenSize, outputSize);
+	}
+	
+	public static DNA createFromFiles(String w1File, String w2File) {
+		DNA dna = new DNA();
+		dna.w1 = Matrix.fromFile(w1File, 19, 9);
+		dna.w2 = Matrix.fromFile(w2File, 9, 9);
+		return dna;
 	}
 	
 	public static DNA createRandom(int inputSize, int hiddenSize, int outputSize) {
@@ -91,5 +98,13 @@ public class DNA {
 		dna.w1 = this.w1.clone();
 		dna.w2 = this.w2.clone();
 		return dna;
+	}
+
+	@Override
+	public String toString() {
+		String str = "";
+		str += w1.toString();
+		str += w2.toString();
+		return str;
 	}
 }

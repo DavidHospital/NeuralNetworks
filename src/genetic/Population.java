@@ -36,8 +36,8 @@ public class Population {
 	
 	DNA getNewChild() {
 		DNA parent1 = getParent(parentPercentile);
-		DNA parent2 = getParent(parentPercentile);
-		DNA child = parent1.splice(parent2);
+		//DNA parent2 = getParent(parentPercentile);
+		DNA child = parent1.clone();
 		child.mutate(mutationRate);
 		return child;
 	}
@@ -46,7 +46,7 @@ public class Population {
 		int i = 1;
 		while (i < popSize) {
 			int j = i;
-			while (j > 0 && score[j - 1] < score[j]) {
+			while (j > 0 && score[j - 1] > score[j]) {
 				int temp = score[j];
 				score[j] = score[j-1];
 				score[j-1] = temp;
