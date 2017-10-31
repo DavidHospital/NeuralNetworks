@@ -1,235 +1,102 @@
 package main;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.util.Random;
-import java.util.Scanner;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
 
-import game.ttt.TicTacToe;
-import game.ttt.TicTacToe.Player;
-import network.neural.engine.Matrix;
-import network.neural.engine.NeuralNetwork3;
+import javax.swing.JFrame;
 
-public class Main {
+@SuppressWarnings("serial")
+public class Game extends JFrame implements KeyListener {
 	
-	public static Scanner r;
-	public static PrintWriter pw;
+	private boolean isRunning = true;
+	private int fps = 60;
+	public static int windowWidth = 800;
+	public static int windowHeight = 600;
+	
+	private BufferedImage backBuffer;
+	private Insets insets;
+	
+	GameManager gm;
+	
+	private Game() {
+        addKeyListener(this);
+        setFocusable(true);
+        setFocusTraversalKeysEnabled(false);
+	}
+	
+	private void run() {
+		initialize();
+		
+		while(isRunning) 
+        { 
+            long time = System.currentTimeMillis(); 
+
+            update(); 
+            render(); 
+
+            time = (1000 / fps) - (System.currentTimeMillis() - time); 
+
+            if (time > 0) 
+            { 
+                try 
+                { 
+                	Thread.sleep(time); 
+                } 
+                catch(Exception e){} 
+            } 
+        } 
+
+        setVisible(false); 
+	}
+	
+	private void initialize() {
+		setTitle("Evolution!");
+		setSize(windowWidth, windowHeight);
+		setResizable(false);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setVisible(true);
+		
+		insets = getInsets();
+		setSize(insets.left + windowWidth + insets.right,
+				insets.top + windowHeight + insets.bottom);
+		
+		backBuffer = new BufferedImage(windowWidth, windowHeight, BufferedImage.TYPE_INT_RGB);
+		
+		gm = new GameManager();
+	}
+	
+	private void update() {
+		gm.update();
+	}
+	
+	private void render() {		
+		Graphics g = getGraphics();
+		Graphics bgg = backBuffer.getGraphics();
+		
+		gm.render(bgg);
+		
+		g.drawImage(backBuffer, insets.left, insets.top, this);
+	}
 	
 	public static void main (String[] args) {
+		// Initialize Window
 		
-		r = new Scanner(System.in);
-		try {
-			pw = new PrintWriter("gen_data.txt");
-			
-			Population pop = new Population(20, 0.02f, 0.5f);
-			pop.generateInital(19, 15, 9);
-			
-			int i = 0;
-			while(i < 100000) {
-				pop.population = pop.newPopulation();
-				pop.score = new int[pop.popSize];
-				
-				for (int j = 0; j < pop.popSize; j ++) {
-					NeuralNetwork3 nn1 = DNA.CreateFromDNA(pop.population[j]);
-					for (int k = 0; k < pop.popSize; k ++) {
-						NeuralNetwork3 nn2 = DNA.CreateFromDNA(pop.population[k]);
-						TicTacToe ttt = TicTacToe.StartingBoard(Player.COMPUTER, Player.COMPUTER);
-						ttt.loadNeuralNetwork(0, nn1);
-						ttt.loadNeuralNetwork(1, nn2);
-						ttt.start();
-						int winner = ttt.getWinner();
-						if (winner == 0) {
-							pop.score[j] += 1;
-						} else if (winner == 1) {
-							pop.score[k] += 1;
-						} else {
-						}
-					}
-				}
-				if (i % 100 == 0) {
-					pop.sortPopulation();
-					System.out.printf("Generation: %d\n", i);
-					System.out.printf("\tBest: %d\n", pop.score[0]);
-					System.out.printf("\tMedian: %d\n", pop.score[pop.popSize / 2]);
-					System.out.printf("\tWorst: %d\n", pop.score[pop.popSize - 1]);
-					pw.printf("%d,%d,%d,%d\n", i, pop.score[0], pop.score[pop.popSize / 2], pop.score[pop.popSize - 1]);
-					pw.flush();
-				}
-				i++;
-			}
-			
-			pw.close();
-			
-			while(true) {
-				pop.sortPopulation();
-				NeuralNetwork3 nn = DNA.CreateFromDNA(pop.population[0]);
-				TicTacToe ttt = TicTacToe.StartingBoard(Player.COMPUTER, Player.HUMAN);
-				ttt.loadNeuralNetwork(0, nn);
-				ttt.start();
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
+		Game game = new Game();
+		game.run();
+		System.exit(0);
 	}
-}
 
+	@Override
+	public void keyPressed(KeyEvent e) {
+	}
 
-class Population {
-	
-	int popSize;
-	float mutationRate;
-	float parentPercentile;
-	
-	DNA[] population;
-	int[] score;
-	
-	Population(int popSize, float mutationRate, float parentPercentile) {
-		this.popSize = popSize;
-		this.mutationRate = mutationRate;
-		this.parentPercentile = parentPercentile;
-		
-		this.population = new DNA[popSize];
-		this.score = new int[popSize];
+	@Override
+	public void keyReleased(KeyEvent e) {
 	}
-	
-	void generateInital(int inputSize, int hiddenSize, int outputSize) {
-		for (int i = 0; i < popSize; i ++) {
-			DNA dna = DNA.createRandom(inputSize, hiddenSize, outputSize);
-			
-			population[i] = dna;
-			score[i] = 0;
-		}
-	}
-	
-	DNA[] newPopulation() {
-		sortPopulation();
-		DNA[] newPop = new DNA[popSize];
-		
-		for (int i = 0; i < popSize; i ++) {
-			DNA parent1 = getParent(parentPercentile);
-			DNA parent2 = getParent(parentPercentile);
-			DNA child = parent1.splice(parent2);
-			child.mutate(mutationRate);
-			newPop[i] = child;
-		}
-		
-		return newPop;
-	}
-	
-	DNA getParent(float percentile) {
-		Random r = new Random();
-		return population[r.nextInt((int) (popSize * percentile))];
-	}
-	
-	void sortPopulation() {
-		int i = 1;
-		while (i < popSize) {
-			int j = i;
-			while (j > 0 && score[j - 1] < score[j]) {
-				int temp = score[j];
-				score[j] = score[j-1];
-				score[j-1] = temp;
-				
-				DNA temp2 = population[j];
-				population[j] = population[j-1];
-				population[j-1] = temp2;
-				
-				j --;
-			}
-			i ++;
-		}
-	}
-}
 
-
-class DNA {
-	
-	Matrix w1;
-	Matrix w2;
-	
-	DNA(){
-	}
-	
-	DNA(int inputSize, int hiddenSize, int outputSize) {
-		w1 = new Matrix(inputSize, hiddenSize);
-		w2 = new Matrix(hiddenSize, outputSize);
-	}
-	
-	public static DNA createRandom(int inputSize, int hiddenSize, int outputSize) {
-		Random r = new Random();
-		DNA dna = new DNA(inputSize, hiddenSize, outputSize);
-		
-		for (int k = 0; k < inputSize; k ++) {
-			for (int j = 0; j < hiddenSize; j ++) {
-				dna.w1.set(k, j, r.nextGaussian());
-			}
-		}
-		
-		for (int k = 0; k < hiddenSize; k ++) {
-			for (int j = 0; j < outputSize; j ++) {
-				dna.w2.set(k, j, r.nextGaussian());
-			}
-		}
-		
-		return dna;
-	}
-	
-	public static DNA CreateDNA(NeuralNetwork3 nn) {
-		DNA dna = new DNA();
-		dna.w1 = nn.getW1();
-		dna.w2 = nn.getW2();
-		return dna;
-	}
-	
-	public static NeuralNetwork3 CreateFromDNA(DNA dna) {
-		NeuralNetwork3 nn = new NeuralNetwork3(dna.w1, dna.w2);
-		return nn;
-	}
-	
-	public void mutate(float mutationRate) {
-		Random r = new Random();
-		for (int i = 0; i < w1.getRows(); i ++) {
-			for (int j = 0; j < w1.getColumns(); j ++) {
-				if (r.nextFloat() < mutationRate) {
-					w1.set(i, j, w1.get(i, j) + r.nextGaussian());
-				}
-			}
-		}
-		
-		for (int i = 0; i < w2.getRows(); i ++) {
-			for (int j = 0; j < w2.getColumns(); j ++) {
-				if (r.nextFloat() < mutationRate) {
-					w2.set(i, j, w2.get(i, j) + r.nextGaussian());
-				}
-			}
-		}
-	}
-	
-	public DNA splice(DNA other) {
-		DNA ret = new DNA();
-		ret.w1 = new Matrix(w1.getRows(), w1.getColumns());
-		ret.w2 = new Matrix(w2.getRows(), w2.getColumns());
-		
-		for (int i = 0; i < w1.getRows(); i ++) {
-			for (int j = 0; j < w1.getColumns(); j ++) {
-				ret.w1.set(i, j, this.w1.get(i, j));
-			}
-		}
-		
-		for (int i = 0; i < w2.getRows(); i ++) {
-			for (int j = 0; j < w2.getColumns(); j ++) {
-				ret.w2.set(i, j, other.w2.get(i, j));
-			}
-		}
-		return ret;
-	}
-	
-	protected DNA clone() {
-		DNA dna = new DNA();
-		dna.w1 = this.w1.clone();
-		dna.w2 = this.w2.clone();
-		return dna;
-	}
+	@Override
+	public void keyTyped(KeyEvent e) {}
 }
