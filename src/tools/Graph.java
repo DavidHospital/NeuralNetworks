@@ -58,6 +58,12 @@ public abstract class Graph {
 	
 	public void addPoint(Vector2 point) {
 		data.add(point);
+		if (point.x > axis.x) {
+			axis.x = point.x;
+		}
+		if (point.y > axis.y) {
+			axis.y = point.y;
+		}
 	}
 	
 	protected Vector2 calcPoint(Vector2 point) {
