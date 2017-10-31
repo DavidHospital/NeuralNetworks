@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
+import tools.Matrix;
+
 public class NeuralNetwork3 {
 
 	private int inputSize;

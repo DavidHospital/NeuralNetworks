@@ -52,7 +52,7 @@ public class Game extends JFrame implements KeyListener {
         setVisible(false); 
 	}
 	
-	private void initialize() {
+	private void initialize() {		
 		setTitle("Evolution!");
 		setSize(windowWidth, windowHeight);
 		setResizable(false);
@@ -91,10 +91,12 @@ public class Game extends JFrame implements KeyListener {
 
 	@Override
 	public void keyPressed(KeyEvent e) {
+		gm.keyPressedEvent(e);
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+		gm.keyReleasedEvent(e);
 	}
 
 	@Override

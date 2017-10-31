@@ -1,4 +1,9 @@
-package network.neural.engine;
+package tools;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class Matrix {
 
@@ -18,6 +23,38 @@ public class Matrix {
 		this.columns = columns;
 		
 		this.a = new double[rows][columns];
+	}
+	
+	public static Matrix fromFile(String fileName, int rows, int columns) {
+		Matrix m = new Matrix(rows, columns);
+		
+		try {
+			Scanner scan = new Scanner(new File(fileName));
+			int row = 0;
+			while (scan.hasNextLine()) {
+				String line = scan.nextLine();
+				StringTokenizer st = new StringTokenizer(line, ",", false);
+				
+				int column = 0;
+				while (st.hasMoreTokens()) {					
+					String token = st.nextToken().trim();
+					
+					m.a[row][column] = Float.parseFloat(token);
+					
+					column ++;
+				}
+				
+				row ++;
+			}
+			
+			scan.close();
+			return m;
+		} catch (FileNotFoundException e) {
+
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 	
 	public static Matrix Identity(int rows, int columns) {
@@ -126,12 +163,12 @@ public class Matrix {
 	public String toString() {
 		String ret = "";
 		for (int i = 0; i < rows; i ++) {
-			ret += "[";
 			for (int j = 0; j < columns; j ++) {
-				ret += Math.round(a[i][j] * 100) / 100.0 + (j < columns - 1 ? ", " : "");
+				ret += a[i][j] + (j < columns - 1 ? ", " : "");
 			}
-			ret += "]\n";
+			ret += "\n";
 		}
+		ret += "\n";
 		
 		return ret;
 	}
