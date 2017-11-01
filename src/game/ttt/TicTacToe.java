@@ -66,6 +66,20 @@ public class TicTacToe {
 		end();
 	}
 	
+	public void doTurn() {
+		switch (players[turn]) {
+		case HUMAN:
+			humanTurn();
+			break;
+		case COMPUTER:
+			computerTurn();
+			break;
+		}
+		
+		state = evaluateBoard();
+		turn = turn == 0 ? 1 : 0;
+	}
+	
 	private void humanTurn() {
 		System.out.println(this + "\n");
 		Scanner scan = new Scanner(new FilterInputStream(System.in) {
@@ -83,22 +97,25 @@ public class TicTacToe {
 	}
 	
 	private void computerTurn() {
-		double[] data = new double[19];
+		double[] data = new double[18];
 		for (int i = 0; i < board.length; i ++) {
 			if (board[i] == -1) {
 				data[2 * i] = 0;
 				data[2 * i + 1] = 0;
 			} else if (board[i] == 0) {
-				data[2 * i] = 0;
-				data[2 * i + 1] = 1;
-			} else if (board[i] == 1) {
 				data[2 * i] = 1;
 				data[2 * i + 1] = 0;
+			} else if (board[i] == 1) {
+				data[2 * i] = 0;
+				data[2 * i + 1] = 1;
 			}
+			//System.out.printf("(%f, %f), ", data[2 * i], data[2 * i + 1]);
 		}
-		data[18] = turn;
+		//System.out.println();
 		Matrix X = Matrix.FromArray(data);
 		Matrix out = nn[turn].forward(X);
+		
+		//System.out.println(out);
 		
 		int largestIndex;
 		double largest;

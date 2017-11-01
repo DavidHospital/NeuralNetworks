@@ -29,15 +29,27 @@ public class Population {
 		}
 	}
 	
-	DNA getParent(float percentile) {
+	DNA getParent() {
 		Random r = new Random();
-		return population[r.nextInt((int) (popSize * percentile))];
+		float total = 0;
+		float rand = r.nextFloat();
+		float sum = 0;
+		for (int i = 0; i < popSize * parentPercentile; i ++) {
+			total += score[i];
+		}
+		for (int i = 0; i < popSize * parentPercentile; i ++) {
+			sum += score[i];
+			if ((sum) / total >= rand) {
+				return population[i];
+			}
+		}
+		return population[0];
 	}
 	
 	DNA getNewChild() {
-		DNA parent1 = getParent(parentPercentile);
-		//DNA parent2 = getParent(parentPercentile);
-		DNA child = parent1.clone();
+		DNA parent1 = getParent();
+		DNA parent2 = getParent();
+		DNA child = parent1.splice(parent2);
 		child.mutate(mutationRate);
 		return child;
 	}

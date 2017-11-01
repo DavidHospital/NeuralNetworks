@@ -81,13 +81,21 @@ public class DNA {
 		
 		for (int i = 0; i < w1.getRows(); i ++) {
 			for (int j = 0; j < w1.getColumns(); j ++) {
-				ret.w1.set(i, j, this.w1.get(i, j));
+				if (Math.random() < 0.5) {
+					ret.w1.set(i, j, this.w1.get(i, j));
+				} else {
+					ret.w1.set(i, j, other.w1.get(i, j));
+				}
 			}
 		}
 		
 		for (int i = 0; i < w2.getRows(); i ++) {
 			for (int j = 0; j < w2.getColumns(); j ++) {
-				ret.w2.set(i, j, other.w2.get(i, j));
+				if (Math.random() < 0.5) {
+					ret.w2.set(i, j, this.w2.get(i, j));
+				} else {
+					ret.w2.set(i, j, other.w2.get(i, j));
+				}
 			}
 		}
 		return ret;
